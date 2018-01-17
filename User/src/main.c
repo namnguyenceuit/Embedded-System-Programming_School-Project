@@ -16,7 +16,7 @@ void from_receive_to_send(queue_t * send, queue_t * receive);
 void queue_push_string(queue_t * Q, const char * string, const uint8_t length);
 void home_screen_option(void);
 void option1(void);
-
+void option2(void);
 
 extern volatile uint8_t b_receive_done;
 extern volatile uint8_t msgSend;
@@ -43,7 +43,6 @@ char* id = "ID: 14520555\n";
 char* name = "Full name: Nguyen Thanh Nam\n";
 
 
-
 int main(){
 	
 	queue_init(&queue_sender);
@@ -52,17 +51,7 @@ int main(){
 	uart_interrupt_my_init();
 
 	for(;;){
-		int a[100];
-		char e[100];
-		int b;
-		int c;
-		int sum;
-		char* test;
-		char test2[100];
-		int i = 0;
-		int j = 0;
-		queue_t queue_test;
-		
+			
 		home_screen_option();
 		from_receive_to_send(&queue_sender, &queue_receiver);
 		uart_my_send();
@@ -76,83 +65,16 @@ int main(){
 		
 		//just for testing
 		//TODO: write in a function, using switch case
-		if (msgSend == 49) 
+		if (msgSend == '1') 
 		{
 			option1();
 		}
 		
 		//TODO: write in a separate function
 		//Notice: local variables will affect the result
-		if (msgSend == 50)
+		if (msgSend == '2')
 		{
-			queue_push_string(&queue_sender, newline, strlen(newline));
-			queue_push_string(&queue_sender, op2, strlen(op2));
-			
-			queue_push_string(&queue_sender, num1, strlen(num1));
-			uart_my_send();
-			uart_my_receive();
-			
-			queue_test = queue_receiver;
-			
-			from_receive_to_send(&queue_sender, &queue_receiver);			
-			uart_my_send();					
-			queue_push_string(&queue_sender, newline, strlen(newline));
-			uart_my_send();
-			
-					
-			while (queue_is_empty(&queue_test) == 0)
-			{
-				e[i] = (char)(queue_test.items[i]);
-				queue_test.capacity--;
-				queue_test.items[i] = queue_test.items[i+1];
-				i++;
-			}
-			
-			b = atoi(e);
-						
-			/*
-			if (e[0] == '2')
-			{
-				queue_push_string(&queue_sender, "aa", strlen("aa"));
-				uart_my_send();
-			} */
-
-			queue_push_string(&queue_sender, num2, strlen(num2));
-			uart_my_send();
-			uart_my_receive();
-			
-			queue_test = queue_receiver;
-			
-			from_receive_to_send(&queue_sender, &queue_receiver);
-			uart_my_send();
-			queue_push_string(&queue_sender, newline, strlen(newline));
-			uart_my_send();			
-			
-			while (queue_is_empty(&queue_test) == 0)
-			{
-				e[j] = queue_test.items[j];
-				queue_test.capacity--;
-				queue_test.items[j] = queue_test.items[j+1];
-				j++;
-			}
-			
-			c = atoi(e);	
-			
-			sum = b + c;
-			
-			/*
-			if (sum == 7)
-			{
-				queue_push_string(&queue_sender, "aa", strlen("aa"));
-				uart_my_send();
-			} */
-			
-			sprintf(test2,"%d",sum);
-			test = test2;
-			queue_push_string(&queue_sender, sum3, strlen(sum3));
-			queue_push_string(&queue_sender, test, strlen(test));
-			uart_my_send();
-			uart_my_receive();
+			option2();
 		} 
 	}
 	return 0;
@@ -167,6 +89,94 @@ void option1()
 	queue_push_string(&queue_sender, id, strlen(id));
 	queue_push_string(&queue_sender, name, strlen(name));
 	queue_push_string(&queue_sender, escape, strlen(escape));
+	queue_push_string(&queue_sender, newline, strlen(newline));
+	uart_my_send();
+	uart_my_receive();
+}
+
+void option2()
+{
+	int a[100];
+	char e[100];
+	int b;
+	int c;
+	int sum;
+	char* test;
+	char test2[100];
+	int i = 0;
+	int j = 0;
+	queue_t queue_test;
+	
+	queue_push_string(&queue_sender, newline, strlen(newline));
+	queue_push_string(&queue_sender, op2, strlen(op2));
+			
+	queue_push_string(&queue_sender, num1, strlen(num1));
+	uart_my_send();
+	uart_my_receive();
+			
+	queue_test = queue_receiver;
+			
+	from_receive_to_send(&queue_sender, &queue_receiver);			
+	uart_my_send();					
+	queue_push_string(&queue_sender, newline, strlen(newline));
+	uart_my_send();
+			
+					
+	while (queue_is_empty(&queue_test) == 0)
+	{
+		e[i] = (char)(queue_test.items[i]);
+		queue_test.capacity--;
+		queue_test.items[i] = queue_test.items[i+1];
+		i++;
+	}
+			
+	b = atoi(e);
+						
+			/*
+			if (e[0] == '2')
+			{
+				queue_push_string(&queue_sender, "aa", strlen("aa"));
+				uart_my_send();
+			} */
+
+	queue_push_string(&queue_sender, num2, strlen(num2));
+	uart_my_send();
+	uart_my_receive();
+			
+	queue_test = queue_receiver;
+			
+	from_receive_to_send(&queue_sender, &queue_receiver);
+	uart_my_send();
+	queue_push_string(&queue_sender, newline, strlen(newline));
+	uart_my_send();			
+			
+	while (queue_is_empty(&queue_test) == 0)
+	{
+		e[j] = queue_test.items[j];
+		queue_test.capacity--;
+		queue_test.items[j] = queue_test.items[j+1];
+		j++;
+	}
+	
+	c = atoi(e);	
+			
+	sum = b + c;
+			
+			/*
+			if (sum == 7)
+			{
+				queue_push_string(&queue_sender, "aa", strlen("aa"));
+				uart_my_send();
+			} */
+			
+	sprintf(test2,"%d",sum);
+	test = test2;
+	queue_push_string(&queue_sender, sum3, strlen(sum3));
+	queue_push_string(&queue_sender, test, strlen(test));
+	queue_push_string(&queue_sender, newline, strlen(newline));
+	
+	queue_push_string(&queue_sender, escape, strlen(escape));
+	
 	queue_push_string(&queue_sender, newline, strlen(newline));
 	uart_my_send();
 	uart_my_receive();
@@ -257,3 +267,4 @@ void from_receive_to_send(queue_t * send, queue_t * receive)
 		queue_push(send, item);
 	}
 }
+
