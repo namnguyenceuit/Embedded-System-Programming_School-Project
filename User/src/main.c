@@ -42,6 +42,7 @@ char* escape = "ESC: return previous menu\n";
 char* id = "ID: 14520555\n";
 char* name = "Full name: Nguyen Thanh Nam\n";
 int a[100];
+char e[100];
 int b;
 int c;
 int sum;
@@ -96,13 +97,20 @@ int main(){
 					
 			while (queue_is_empty(&queue_test) == 0)
 			{
-				a[i] = queue_test.items[i];
+				e[i] = (char)(queue_test.items[i]);
 				queue_test.capacity--;
 				queue_test.items[i] = queue_test.items[i+1];
 				i++;
 			}
 			
-			b = atoi((char*)a);
+			b = atoi(e);
+						
+			/*
+			if (e[0] == '2')
+			{
+				queue_push_string(&queue_sender, "aa", strlen("aa"));
+				uart_my_send();
+			} */
 
 			queue_push_string(&queue_sender, num2, strlen(num2));
 			uart_my_send();
@@ -117,13 +125,13 @@ int main(){
 			
 			while (queue_is_empty(&queue_test) == 0)
 			{
-				a[j] = queue_test.items[j];
+				e[j] = queue_test.items[j];
 				queue_test.capacity--;
 				queue_test.items[j] = queue_test.items[j+1];
 				j++;
 			}
 			
-			c = atoi((char*)a);	
+			c = atoi(e);	
 			
 			sum = b + c;
 			
