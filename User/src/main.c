@@ -2,6 +2,7 @@
 #include "queue.h"
 #include "stdlib.h"
 #include "stdio.h"
+#include "math.h"
 
 #define STR_MAX_LENGTH	100
 #define TC_BIT			0x0040
@@ -16,7 +17,12 @@ void from_receive_to_send(queue_t * send, queue_t * receive);
 void queue_push_string(queue_t * Q, const char * string, const uint8_t length);
 int get_data(queue_t q);
 void input_operand(int *a, int *b);
+void op2_print_result(char *result);
 void plus(void);
+void subtract(void);
+void multiply(void);
+void divide(void);
+void module(void);
 void home_screen_option(void);
 void home_screen_option2(void);
 void option1(void);
@@ -57,6 +63,8 @@ int main(){
 		uart_my_send();
 		
 		// Check input option
+		// TODO: add other functions
+		// TODO: check if user input orther keys
 		switch (msgSend)
 		{
 			case '1':
@@ -111,17 +119,27 @@ void option2()
 		case 'a':
 			plus();
 			break;
+		case 'b':
+			subtract();
+			break;
+		case 'c':
+			multiply();
+			break;
+		case 'd':
+			divide();
+			break;
+		case 'e':
+			module();
+			break;
 		default:
 			home_screen_option2();
 	}	
 }
 
-//TODO: write input operand in separate function
 void plus()
 {
-	char* txtresult = "Result: ";	
-	
 	// variables for calculation
+	// TODO: uint8_t variables
 	int operand1;
 	int operand2;
 	// variables for showing result
@@ -139,6 +157,110 @@ void plus()
 	result = sum_convert;
 	
 	// Print result
+	op2_print_result(result);
+}
+
+void subtract()
+{
+	// variables for calculation
+	// TODO: uint8_t variables
+	int operand1;
+	int operand2;
+	// variables for showing result
+	char* result;
+	char sub_convert[100];	
+	int sub;
+
+	input_operand(&operand1, &operand2);
+	
+	// Cal sum
+	sub = operand1 - operand2;
+	
+	// Convert back to string
+	sprintf(sub_convert,"%d",sub);
+	result = sub_convert;
+	
+	// Print result
+	op2_print_result(result);
+}
+
+void multiply(void)
+{
+	// variables for calculation
+	// TODO: uint8_t variables
+	int operand1;
+	int operand2;
+	// variables for showing result
+	char* result;
+	char mul_convert[100];	
+	int mul;
+
+	input_operand(&operand1, &operand2);
+	
+	// Cal sum
+	mul = operand1 * operand2;
+	
+	// Convert back to string
+	sprintf(mul_convert,"%d",mul);
+	result = mul_convert;
+	
+	// Print result
+	op2_print_result(result);	
+}
+
+
+void divide(void)
+{
+	// variables for calculation
+	// TODO: uint8_t variables
+	int operand1;
+	int operand2;
+	// variables for showing result
+	char* result;
+	char div_convert[100];	
+	float div;
+
+	input_operand(&operand1, &operand2);
+	
+	// Cal sum
+	div = (float)(operand1) / (float)(operand2);
+	
+	// Convert back to string
+	sprintf(div_convert,"%0.2f",div);
+	result = div_convert;
+	
+	// Print result
+	op2_print_result(result);	
+}
+
+void module(void)
+{
+	// variables for calculation
+	// TODO: uint8_t variables
+	int operand1;
+	int operand2;
+	// variables for showing result
+	char* result;
+	char mol_convert[100];	
+	float mol;
+
+	input_operand(&operand1, &operand2);
+	
+	// Cal sum
+	mol = sqrt((float)(operand1 * operand1) + (float)(operand2 * operand2));
+	
+	// Convert back to string
+	sprintf(mol_convert,"%0.2f",mol);
+	result = mol_convert;
+	
+	// Print result
+	op2_print_result(result);	
+}
+
+void op2_print_result(char *result)
+{
+	char* txtresult = "Result: ";	
+	
 	queue_push_string(&queue_sender, txtresult, strlen(txtresult));
 	queue_push_string(&queue_sender, result, strlen(result));
 	queue_push_string(&queue_sender, newline, strlen(newline));
@@ -155,6 +277,7 @@ void input_operand(int *a, int *b)
 	int operand1, operand2;
 	char* num1 = "Operand 1: ";
 	char* num2 = "Operand 2: ";
+	
 	// queue for get data input
 	queue_t queue_get_data;
 	
@@ -195,7 +318,6 @@ void input_operand(int *a, int *b)
 	// Convert to int
 	operand2 = get_data(queue_get_data);
 	*b = operand2;
-	//return 0;
 }
 
 void home_screen_option()
