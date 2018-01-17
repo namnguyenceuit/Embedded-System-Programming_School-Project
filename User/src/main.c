@@ -23,10 +23,13 @@ void subtract(void);
 void multiply(void);
 void divide(void);
 void module(void);
+void blink(void);
 void home_screen_option(void);
 void home_screen_option2(void);
+void home_screen_option3(void);
 void option1(void);
 void option2(void);
+void option3(void);
 
 extern volatile uint8_t b_receive_done;
 // extern variable declare for using option
@@ -38,9 +41,9 @@ extern queue_t queue_receiver;
 char* choose = "Choose your option (1, 2, ..): \n";
 char* op1 = 		"1. Student info\n";
 char* op2 = 	  "2. Basic operation( a,b,..):\n";
-char* option3 = "3. Simple led\n";
-char* option4 = "4. Advance led\n";
-char* option5 = "5. Audio\n";
+char* op3 = "3. Simple led\n";
+char* op4 = "4. Advance led\n";
+char* op5 = "5. Audio\n";
 char* useroption = "Your option: ";
 char* escape = "ESC: return previous menu\n";
 char* newline = "\n";
@@ -72,6 +75,9 @@ int main(){
 				break;
 			case '2':
 				option2();
+				break;
+			case '3':
+				option3();
 				break;
 			default:
 				home_screen_option();
@@ -136,6 +142,80 @@ void option2()
 	}	
 }
 
+void option3()
+{
+	queue_t queue_get_data;
+	int op_operator;
+	
+	home_screen_option3();
+	uart_my_receive();	
+	queue_get_data = queue_receiver;
+	
+	from_receive_to_send(&queue_sender, &queue_receiver);
+	uart_my_send();					
+	queue_push_string(&queue_sender, newline, strlen(newline));
+	uart_my_send();
+	
+	op_operator = queue_get_data.items[0];
+	STM_EVAL_LEDInit(LED3);
+	STM_EVAL_LEDInit(LED4);
+	
+	
+	switch (op_operator)
+	{
+		case 'a':
+			STM_EVAL_LEDOn(LED3);
+			break;
+		case 'b':
+			STM_EVAL_LEDOff(LED3);
+			break;
+		case 'c':
+			blink();
+			break;
+		default:
+			home_screen_option3();
+	}
+	
+}
+
+void blink()
+{
+	int i, j, times;
+	char* input_times = "Blink LED! Input times you want to blink: ";
+	
+	// queue for get data input
+	queue_t queue_get_data;
+	
+	/* Process for times input	*/
+	queue_push_string(&queue_sender, newline, strlen(newline));
+	queue_push_string(&queue_sender, input_times, strlen(input_times));
+	uart_my_send();
+	uart_my_receive();
+	
+	// Get data input
+	queue_get_data = queue_receiver;
+	
+	// Print to terminal
+	from_receive_to_send(&queue_sender, &queue_receiver);			
+	uart_my_send();					
+	queue_push_string(&queue_sender, newline, strlen(newline));
+	uart_my_send();
+	
+	// Convert to int
+	times = get_data(queue_get_data);
+	for (i = 0; i < times; i++)
+	{
+			STM_EVAL_LEDOn(LED3);
+			STM_EVAL_LEDOn(LED4);
+			for(j = 0; j < 1000000; j++);
+			STM_EVAL_LEDOff(LED3);
+			STM_EVAL_LEDOff(LED4);
+			for(j = 0; j < 1000000; j++);
+	}
+	
+	queue_push_string(&queue_sender, newline, strlen(newline));
+	uart_my_send();
+}
 void plus()
 {
 	// variables for calculation
@@ -325,9 +405,9 @@ void home_screen_option()
 	queue_push_string(&queue_sender, choose, strlen(choose));
 	queue_push_string(&queue_sender, op1, strlen(op1));
 	queue_push_string(&queue_sender, op2, strlen(op2));
-	queue_push_string(&queue_sender, option3, strlen(option3));
-	queue_push_string(&queue_sender, option4, strlen(option4));
-	queue_push_string(&queue_sender, option5, strlen(option5));
+	queue_push_string(&queue_sender, op3, strlen(op3));
+	queue_push_string(&queue_sender, op4, strlen(op4));
+	queue_push_string(&queue_sender, op5, strlen(op5));
 	queue_push_string(&queue_sender, escape, strlen(escape));
 	queue_push_string(&queue_sender, useroption, strlen(useroption));
 	uart_my_send();
@@ -343,6 +423,19 @@ void home_screen_option2()
 	queue_push_string(&queue_sender, "c. Multiply\n", strlen("c. Multiply\n"));
 	queue_push_string(&queue_sender, "d. Divide\n", strlen("d. Divide\n"));
 	queue_push_string(&queue_sender, "e. Module\n", strlen("e. Module\n"));
+	queue_push_string(&queue_sender, useroption, strlen(useroption));
+	uart_my_send();
+}
+
+void home_screen_option3()
+{
+	queue_push_string(&queue_sender, newline, strlen(newline));
+	queue_push_string(&queue_sender, op3, strlen(op3));
+	queue_push_string(&queue_sender, "a. On Green\n", strlen("a. On Green\n"));
+	queue_push_string(&queue_sender, "b. Of Green\n", strlen("b. Off Green\n"));
+	queue_push_string(&queue_sender, "c. Blink LED\n", strlen("c. Blink LED\n"));
+	//queue_push_string(&queue_sender, "d. Divide\n", strlen("d. Divide\n"));
+	//queue_push_string(&queue_sender, "e. Module\n", strlen("e. Module\n"));
 	queue_push_string(&queue_sender, useroption, strlen(useroption));
 	uart_my_send();
 }
