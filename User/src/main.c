@@ -15,7 +15,9 @@ void uart_my_receive(void);
 void from_receive_to_send(queue_t * send, queue_t * receive);
 void queue_push_string(queue_t * Q, const char * string, const uint8_t length);
 int get_data(queue_t q);
+void plus(void);
 void home_screen_option(void);
+void home_screen_option2(void);
 void option1(void);
 void option2(void);
 
@@ -28,7 +30,7 @@ extern queue_t queue_receiver;
 
 char* choose = "Choose your option (1, 2, ..): \n";
 char* op1 = 		"1. Student info\n";
-char* op2 = 	  "2. Basic operation\n";
+char* op2 = 	  "2. Basic operation( a,b,..):\n";
 char* option3 = "3. Simple led\n";
 char* option4 = "4. Advance led\n";
 char* option5 = "5. Audio\n";
@@ -86,26 +88,55 @@ void option1()
 
 void option2()
 {
+	queue_t queue_get_data;
+	int op_operator;
+	
+	// Home screen option 2
+	home_screen_option2();
+	uart_my_receive();	
+	queue_get_data = queue_receiver;
+	
+	// Print to terminal
+	from_receive_to_send(&queue_sender, &queue_receiver);			
+	uart_my_send();					
+	queue_push_string(&queue_sender, newline, strlen(newline));
+	uart_my_send();
+	
+	op_operator = queue_get_data.items[0];
+	
+	//TODO: ESC doesn't show the previous menu
+	switch (op_operator)
+	{
+		case 'a':
+			plus();
+			break;
+		default:
+			home_screen_option2();
+	}	
+}
+
+//TODO: write input operand in separate function
+void plus()
+{
 	char* num1 = "Operand 1: ";
 	char* num2 = "Operand 2: ";
-	char* txtresult = "Result: ";
+	char* txtresult = "Result: ";	
 	
 	// variables for calculation
 	int operand1;
 	int operand2;
+	
+	// queue for get data input
+	queue_t queue_get_data;
+	
 	int sum;
 	
 	// variables for showing result
 	char* result;
 	char sum_convert[100];
 	
-	// queue for get data input
-	queue_t queue_get_data;
-	
-	queue_push_string(&queue_sender, newline, strlen(newline));
-	queue_push_string(&queue_sender, op2, strlen(op2));
-	
 	/* Process for operand 1	*/
+	queue_push_string(&queue_sender, newline, strlen(newline));
 	queue_push_string(&queue_sender, num1, strlen(num1));
 	uart_my_send();
 	uart_my_receive();
@@ -135,7 +166,7 @@ void option2()
 	from_receive_to_send(&queue_sender, &queue_receiver);
 	uart_my_send();
 	queue_push_string(&queue_sender, newline, strlen(newline));
-	uart_my_send();			
+	uart_my_send();
 	
 	// Convert to int
 	operand2 = get_data(queue_get_data);
@@ -171,6 +202,19 @@ void home_screen_option()
 	queue_push_string(&queue_sender, useroption, strlen(useroption));
 	uart_my_send();
 	uart_my_receive();
+}
+
+void home_screen_option2()
+{
+	queue_push_string(&queue_sender, newline, strlen(newline));
+	queue_push_string(&queue_sender, op2, strlen(op2));
+	queue_push_string(&queue_sender, "a. Plus\n", strlen("a. Plus\n"));
+	queue_push_string(&queue_sender, "b. Subtract\n", strlen("b. Subtract\n"));
+	queue_push_string(&queue_sender, "c. Multiply\n", strlen("c. Multiply\n"));
+	queue_push_string(&queue_sender, "d. Divide\n", strlen("d. Divide\n"));
+	queue_push_string(&queue_sender, "e. Module\n", strlen("e. Module\n"));
+	queue_push_string(&queue_sender, useroption, strlen(useroption));
+	uart_my_send();
 }
 
 void uart_interrupt_my_init()
