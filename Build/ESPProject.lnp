@@ -1,0 +1,28 @@
+--cpu Cortex-M4.fp
+".\build\startup_stm32f429_439xx.o"
+".\build\system_stm32f4xx.o"
+".\build\misc.o"
+".\build\stm32f4xx_dma.o"
+".\build\stm32f4xx_dma2d.o"
+".\build\stm32f4xx_exti.o"
+".\build\stm32f4xx_fmc.o"
+".\build\stm32f4xx_gpio.o"
+".\build\stm32f4xx_i2c.o"
+".\build\stm32f4xx_ltdc.o"
+".\build\stm32f4xx_rcc.o"
+".\build\stm32f4xx_rng.o"
+".\build\stm32f4xx_spi.o"
+".\build\stm32f4xx_syscfg.o"
+".\build\stm32f4xx_usart.o"
+".\build\main.o"
+".\build\queue.o"
+".\build\stm32f4xx_it.o"
+".\build\stm32f429i_discovery.o"
+".\build\stm32f429i_discovery_i2c_ee.o"
+".\build\stm32f429i_discovery_ioe.o"
+".\build\stm32f429i_discovery_l3gd20.o"
+".\build\stm32f429i_discovery_lcd.o"
+".\build\stm32f429i_discovery_sdram.o"
+--ro-base 0x08000000 --entry 0x08000000 --rw-base 0x20000000 --entry Reset_Handler --first __Vectors --strict --summary_stderr --info summarysizes --map --xref --callgraph --symbols
+--info sizes --info totals --info unused --info veneers
+--list ".\ESPProject.map" -o .\Build\ESPProject.axf
