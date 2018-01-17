@@ -23,7 +23,7 @@ extern volatile uint8_t msgSend;
 
 extern queue_t queue_sender;
 extern queue_t queue_receiver;
-queue_t queue_test;
+
 
 char* choose = "Choose your option (1, 2, ..): \n";
 char* op1 = 		"1. Student info\n";
@@ -41,24 +41,28 @@ char* sum3 = "Result: ";
 char* escape = "ESC: return previous menu\n";
 char* id = "ID: 14520555\n";
 char* name = "Full name: Nguyen Thanh Nam\n";
-int a[100];
-char e[100];
-int b;
-int c;
-int sum;
-char* test;
-char test2[100];
-int i = 0;
-int j = 0;
+
 
 
 int main(){
+	
 	queue_init(&queue_sender);
 	queue_init(&queue_receiver);
 
 	uart_interrupt_my_init();
 
 	for(;;){
+		int a[100];
+		char e[100];
+		int b;
+		int c;
+		int sum;
+		char* test;
+		char test2[100];
+		int i = 0;
+		int j = 0;
+		queue_t queue_test;
+		
 		home_screen_option();
 		from_receive_to_send(&queue_sender, &queue_receiver);
 		uart_my_send();
@@ -77,7 +81,8 @@ int main(){
 			option1();
 		}
 		
-		
+		//TODO: write in a separate function
+		//Notice: local variables will affect the result
 		if (msgSend == 50)
 		{
 			queue_push_string(&queue_sender, newline, strlen(newline));

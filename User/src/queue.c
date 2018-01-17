@@ -47,10 +47,6 @@ uint8_t queue_is_empty(const queue_t * Q)
 	return b_result;
 }
 
-void empty_queue(queue_t *Q)
-{
-	Q->items[0] = 0;
-}
 
 /**
   * @brief  Check if queue is full or not
