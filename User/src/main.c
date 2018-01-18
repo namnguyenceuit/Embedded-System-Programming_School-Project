@@ -12,6 +12,7 @@
 
 void uart_interrupt_my_init(void);
 void uart_my_send(void);
+void uart_my_send2(char *q);
 void uart_my_receive(void);
 void from_receive_to_send(queue_t * send, queue_t * receive);
 void queue_push_string(queue_t * Q, const char * string, const uint8_t length);
@@ -24,12 +25,12 @@ void multiply(void);
 void divide(void);
 void module(void);
 void blink(void);
-void home_screen_option(void);
-void home_screen_option2(void);
-void home_screen_option3(void);
-void option1(void);
-void option2(void);
-void option3(void);
+void menu_home(void);
+void menu_option2(void);
+void menu_option3(void);
+void student_info(void);
+void basic_operation(void);
+void simple_led(void);
 
 extern volatile uint8_t b_receive_done;
 // extern variable declare for using option
@@ -38,15 +39,36 @@ extern volatile uint8_t msgSend;
 extern queue_t queue_sender;
 extern queue_t queue_receiver;
 
-char* choose = "Choose your option (1, 2, ..): \n";
-char* op1 = 		"1. Student info\n";
-char* op2 = 	  "2. Basic operation( a,b,..):\n";
-char* op3 = "3. Simple led\n";
-char* op4 = "4. Advance led\n";
-char* op5 = "5. Audio\n";
-char* useroption = "Your option: ";
-char* escape = "ESC: return previous menu\n";
-char* newline = "\n";
+char* MAIN_MENU = "Choose your option (1, 2, ..): \n\
+								1. Student info\n\
+								2. Basic operation( a,b,..):\n\
+								3. Simple led\n\
+								4. Advance led\n\
+								5. Audio\n\
+								ESC: return previous menu\n\
+								Your option: ";
+char* OPTION1 = "\n1. Student info\n\
+								ID: 14520555\n\
+								Full name: Nguyen Thanh Nam\n\
+								ESC: return previous menu\n";
+
+char* OPTION2 = "2. Basic operation( a,b,..):\n\
+								a. Plus\n\
+								b. Subtract\n\
+								c. Multiply\n\
+								d. Divide\n\
+								e. Module\n\
+								ESC: return previous menu\n\
+								Your option: ";
+
+char* OPTION3 = "3. Simple led\n\
+								a. On Green\n\
+								b. Off Green\n\
+								c. Blink led\n\
+								ESC: return previous menu\n\
+								Your option: ";
+
+char* NEWLINE = "\n";
 
 
 int main(){
@@ -59,10 +81,10 @@ int main(){
 
 	for(;;){
 		// Send option & wait for user input
-		home_screen_option();
+		menu_home();
 		from_receive_to_send(&queue_sender, &queue_receiver);
 		uart_my_send();
-		queue_push_string(&queue_sender, newline, strlen(newline));
+		queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
 		uart_my_send();
 		
 		// Check input option
@@ -71,50 +93,60 @@ int main(){
 		switch (msgSend)
 		{
 			case '1':
-				option1();
+				student_info();
 				break;
 			case '2':
-				option2();
+				basic_operation();
 				break;
 			case '3':
-				option3();
+				simple_led();
 				break;
 			default:
-				home_screen_option();
+				menu_home();
 		}
 	}
 	return 0;
 }
 
-void option1()
+void menu_home()
 {
-	char* id = "ID: 14520555\n";
-	char* name = "Full name: Nguyen Thanh Nam\n";
-	
-	queue_push_string(&queue_sender, newline, strlen(newline));
-	queue_push_string(&queue_sender, op1, strlen(op1));
-	queue_push_string(&queue_sender, id, strlen(id));
-	queue_push_string(&queue_sender, name, strlen(name));
-	queue_push_string(&queue_sender, escape, strlen(escape));
-	queue_push_string(&queue_sender, newline, strlen(newline));
-	uart_my_send();
+	uart_my_send2(MAIN_MENU);
 	uart_my_receive();
 }
 
-void option2()
+void menu_option2()
+{
+	uart_my_send2(NEWLINE);
+	uart_my_send2(OPTION2);
+}
+
+void menu_option3()
+{
+	uart_my_send2(NEWLINE);
+	uart_my_send2(OPTION3);
+}
+
+void student_info()
+{
+	uart_my_send2(OPTION1);
+	uart_my_send2(NEWLINE);
+	uart_my_receive();
+}
+
+void basic_operation()
 {
 	queue_t queue_get_data;
 	int op_operator;
 	
 	// Home screen option 2
-	home_screen_option2();
+	menu_option2();
 	uart_my_receive();	
 	queue_get_data = queue_receiver;
 	
 	// Print to terminal
 	from_receive_to_send(&queue_sender, &queue_receiver);			
 	uart_my_send();					
-	queue_push_string(&queue_sender, newline, strlen(newline));
+	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
 	uart_my_send();
 	
 	op_operator = queue_get_data.items[0];
@@ -138,22 +170,22 @@ void option2()
 			module();
 			break;
 		default:
-			home_screen_option2();
+			menu_option2();
 	}	
 }
 
-void option3()
+void simple_led()
 {
 	queue_t queue_get_data;
 	int op_operator;
 	
-	home_screen_option3();
+	menu_option3();
 	uart_my_receive();	
 	queue_get_data = queue_receiver;
 	
 	from_receive_to_send(&queue_sender, &queue_receiver);
 	uart_my_send();					
-	queue_push_string(&queue_sender, newline, strlen(newline));
+	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
 	uart_my_send();
 	
 	op_operator = queue_get_data.items[0];
@@ -173,7 +205,7 @@ void option3()
 			blink();
 			break;
 		default:
-			home_screen_option3();
+			menu_option3();
 	}
 	
 }
@@ -187,7 +219,7 @@ void blink()
 	queue_t queue_get_data;
 	
 	/* Process for times input	*/
-	queue_push_string(&queue_sender, newline, strlen(newline));
+	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
 	queue_push_string(&queue_sender, input_times, strlen(input_times));
 	uart_my_send();
 	uart_my_receive();
@@ -198,7 +230,7 @@ void blink()
 	// Print to terminal
 	from_receive_to_send(&queue_sender, &queue_receiver);			
 	uart_my_send();					
-	queue_push_string(&queue_sender, newline, strlen(newline));
+	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
 	uart_my_send();
 	
 	// Convert to int
@@ -213,7 +245,7 @@ void blink()
 			for(j = 0; j < 1000000; j++);
 	}
 	
-	queue_push_string(&queue_sender, newline, strlen(newline));
+	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
 	uart_my_send();
 }
 void plus()
@@ -343,11 +375,10 @@ void op2_print_result(char *result)
 	
 	queue_push_string(&queue_sender, txtresult, strlen(txtresult));
 	queue_push_string(&queue_sender, result, strlen(result));
-	queue_push_string(&queue_sender, newline, strlen(newline));
+	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
 	
-	queue_push_string(&queue_sender, escape, strlen(escape));
 	
-	queue_push_string(&queue_sender, newline, strlen(newline));
+	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
 	uart_my_send();
 	uart_my_receive();
 }
@@ -362,7 +393,7 @@ void input_operand(int *a, int *b)
 	queue_t queue_get_data;
 	
 	/* Process for operand 1	*/
-	queue_push_string(&queue_sender, newline, strlen(newline));
+	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
 	queue_push_string(&queue_sender, num1, strlen(num1));
 	uart_my_send();
 	uart_my_receive();
@@ -373,7 +404,7 @@ void input_operand(int *a, int *b)
 	// Print to terminal
 	from_receive_to_send(&queue_sender, &queue_receiver);			
 	uart_my_send();					
-	queue_push_string(&queue_sender, newline, strlen(newline));
+	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
 	uart_my_send();
 	
 	// Convert to int
@@ -392,52 +423,12 @@ void input_operand(int *a, int *b)
 	// Print to terminal	
 	from_receive_to_send(&queue_sender, &queue_receiver);
 	uart_my_send();
-	queue_push_string(&queue_sender, newline, strlen(newline));
+	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
 	uart_my_send();
 	
 	// Convert to int
 	operand2 = get_data(queue_get_data);
 	*b = operand2;
-}
-
-void home_screen_option()
-{
-	queue_push_string(&queue_sender, choose, strlen(choose));
-	queue_push_string(&queue_sender, op1, strlen(op1));
-	queue_push_string(&queue_sender, op2, strlen(op2));
-	queue_push_string(&queue_sender, op3, strlen(op3));
-	queue_push_string(&queue_sender, op4, strlen(op4));
-	queue_push_string(&queue_sender, op5, strlen(op5));
-	queue_push_string(&queue_sender, escape, strlen(escape));
-	queue_push_string(&queue_sender, useroption, strlen(useroption));
-	uart_my_send();
-	uart_my_receive();
-}
-
-void home_screen_option2()
-{
-	queue_push_string(&queue_sender, newline, strlen(newline));
-	queue_push_string(&queue_sender, op2, strlen(op2));
-	queue_push_string(&queue_sender, "a. Plus\n", strlen("a. Plus\n"));
-	queue_push_string(&queue_sender, "b. Subtract\n", strlen("b. Subtract\n"));
-	queue_push_string(&queue_sender, "c. Multiply\n", strlen("c. Multiply\n"));
-	queue_push_string(&queue_sender, "d. Divide\n", strlen("d. Divide\n"));
-	queue_push_string(&queue_sender, "e. Module\n", strlen("e. Module\n"));
-	queue_push_string(&queue_sender, useroption, strlen(useroption));
-	uart_my_send();
-}
-
-void home_screen_option3()
-{
-	queue_push_string(&queue_sender, newline, strlen(newline));
-	queue_push_string(&queue_sender, op3, strlen(op3));
-	queue_push_string(&queue_sender, "a. On Green\n", strlen("a. On Green\n"));
-	queue_push_string(&queue_sender, "b. Of Green\n", strlen("b. Off Green\n"));
-	queue_push_string(&queue_sender, "c. Blink LED\n", strlen("c. Blink LED\n"));
-	//queue_push_string(&queue_sender, "d. Divide\n", strlen("d. Divide\n"));
-	//queue_push_string(&queue_sender, "e. Module\n", strlen("e. Module\n"));
-	queue_push_string(&queue_sender, useroption, strlen(useroption));
-	uart_my_send();
 }
 
 void uart_interrupt_my_init()
@@ -491,6 +482,12 @@ void queue_push_string(queue_t * Q, const char * string, const uint8_t length)
 
 void uart_my_send()
 {
+	USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
+}
+
+void uart_my_send2(char *q)
+{
+	queue_push_string(&queue_sender, q, strlen(q));
 	USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
 }
 
