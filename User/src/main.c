@@ -11,9 +11,8 @@
 #define RXNE_SHIFT_LEFT	5
 
 void uart_interrupt_my_init(void);
-void uart_my_send(void);
-void uart_my_send2(char *q);
-void uart_my_receive(void);
+void uart_send(char *q);
+void uart_receive(void);
 void from_receive_to_send(queue_t * send, queue_t * receive);
 void queue_push_string(queue_t * Q, const char * string, const uint8_t length);
 int get_data(queue_t q);
@@ -41,12 +40,13 @@ extern queue_t queue_receiver;
 
 char* MAIN_MENU = "Choose your option (1, 2, ..): \n\
 								1. Student info\n\
-								2. Basic operation( a,b,..):\n\
+								2. Basic operation\n\
 								3. Simple led\n\
 								4. Advance led\n\
 								5. Audio\n\
 								ESC: return previous menu\n\
 								Your option: ";
+
 char* OPTION1 = "\n1. Student info\n\
 								ID: 14520555\n\
 								Full name: Nguyen Thanh Nam\n\
@@ -83,11 +83,9 @@ int main(){
 		// Send option & wait for user input
 		menu_home();
 		from_receive_to_send(&queue_sender, &queue_receiver);
-		uart_my_send();
-		uart_my_send2(NEWLINE);
+		uart_send(NEWLINE);
 		
 		// Check input option
-		// TODO: add other functions
 		// TODO: check if user input orther keys
 		switch (msgSend)
 		{
@@ -109,27 +107,27 @@ int main(){
 
 void menu_home()
 {
-	uart_my_send2(MAIN_MENU);
-	uart_my_receive();
+	uart_send(MAIN_MENU);
+	uart_receive();
 }
 
 void menu_option2()
 {
-	uart_my_send2(NEWLINE);
-	uart_my_send2(OPTION2);
+	uart_send(NEWLINE);
+	uart_send(OPTION2);
 }
 
 void menu_option3()
 {
-	uart_my_send2(NEWLINE);
-	uart_my_send2(OPTION3);
+	uart_send(NEWLINE);
+	uart_send(OPTION3);
 }
 
 void student_info()
 {
-	uart_my_send2(OPTION1);
-	uart_my_send2(NEWLINE);
-	uart_my_receive();
+	uart_send(OPTION1);
+	uart_send(NEWLINE);
+	uart_receive();
 }
 
 void basic_operation()
@@ -139,13 +137,12 @@ void basic_operation()
 	
 	// Home screen option 2
 	menu_option2();
-	uart_my_receive();	
+	uart_receive();	
 	queue_get_data = queue_receiver;
 	
 	// Print to terminal
-	from_receive_to_send(&queue_sender, &queue_receiver);			
-	uart_my_send();					
-	uart_my_send2(NEWLINE);
+	from_receive_to_send(&queue_sender, &queue_receiver);					
+	uart_send(NEWLINE);
 	
 	op_operator = queue_get_data.items[0];
 	
@@ -178,12 +175,11 @@ void simple_led()
 	int op_operator;
 	
 	menu_option3();
-	uart_my_receive();	
+	uart_receive();	
 	queue_get_data = queue_receiver;
 	
-	from_receive_to_send(&queue_sender, &queue_receiver);
-	uart_my_send();					
-	uart_my_send2(NEWLINE);
+	from_receive_to_send(&queue_sender, &queue_receiver);				
+	uart_send(NEWLINE);
 	
 	op_operator = queue_get_data.items[0];
 	STM_EVAL_LEDInit(LED3);
@@ -217,16 +213,15 @@ void blink()
 	
 	/* Process for times input	*/
 	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
-	uart_my_send2(INPUT_TIMES);
-	uart_my_receive();
+	uart_send(INPUT_TIMES);
+	uart_receive();
 	
 	// Get data input
 	queue_get_data = queue_receiver;
 	
 	// Print to terminal
-	from_receive_to_send(&queue_sender, &queue_receiver);			
-	uart_my_send();					
-	uart_my_send2(NEWLINE);
+	from_receive_to_send(&queue_sender, &queue_receiver);								
+	uart_send(NEWLINE);
 	
 	// Convert to int
 	times = get_data(queue_get_data);
@@ -240,12 +235,11 @@ void blink()
 			for(j = 0; j < 3000000; j++);
 	}
 	
-	uart_my_send2(NEWLINE);
+	uart_send(NEWLINE);
 }
 void plus()
 {
 	// variables for calculation
-	// TODO: uint8_t variables
 	int operand1;
 	int operand2;
 	// variables for showing result
@@ -269,7 +263,6 @@ void plus()
 void subtract()
 {
 	// variables for calculation
-	// TODO: uint8_t variables
 	int operand1;
 	int operand2;
 	// variables for showing result
@@ -293,7 +286,6 @@ void subtract()
 void multiply(void)
 {
 	// variables for calculation
-	// TODO: uint8_t variables
 	int operand1;
 	int operand2;
 	// variables for showing result
@@ -318,7 +310,6 @@ void multiply(void)
 void divide(void)
 {
 	// variables for calculation
-	// TODO: uint8_t variables
 	int operand1;
 	int operand2;
 	// variables for showing result
@@ -342,7 +333,6 @@ void divide(void)
 void module(void)
 {
 	// variables for calculation
-	// TODO: uint8_t variables
 	int operand1;
 	int operand2;
 	// variables for showing result
@@ -368,12 +358,12 @@ void op2_print_result(char *result)
 	char* txtResult = "Result: ";	
 	char* ESC = "ESC: return previous menu\n";
 	
-	uart_my_send2(txtResult);
-	uart_my_send2(result);
-	uart_my_send2(NEWLINE);
-	uart_my_send2(ESC);;
-	uart_my_send2(NEWLINE);
-	uart_my_receive();
+	uart_send(txtResult);
+	uart_send(result);
+	uart_send(NEWLINE);
+	uart_send(ESC);;
+	uart_send(NEWLINE);
+	uart_receive();
 }
 
 void input_operand(int *a, int *b)
@@ -386,17 +376,16 @@ void input_operand(int *a, int *b)
 	queue_t queue_get_data;
 	
 	/* Process for operand 1	*/
-	uart_my_send2(NEWLINE);
-	uart_my_send2(NUM1_REQUEST);
-	uart_my_receive();
+	uart_send(NEWLINE);
+	uart_send(NUM1_REQUEST);
+	uart_receive();
 	
 	// Get data input
 	queue_get_data = queue_receiver;
 	
 	// Print to terminal
-	from_receive_to_send(&queue_sender, &queue_receiver);			
-	uart_my_send();					
-	uart_my_send2(NEWLINE);
+	from_receive_to_send(&queue_sender, &queue_receiver);						
+	uart_send(NEWLINE);
 	
 	// Convert to int
 	operand1 = get_data(queue_get_data);
@@ -404,16 +393,15 @@ void input_operand(int *a, int *b)
 	
 	
 	// Process for operand 2
-	uart_my_send2(NUM2_REQUEST);
-	uart_my_receive();
+	uart_send(NUM2_REQUEST);
+	uart_receive();
 	
 	// Get data input	
 	queue_get_data = queue_receiver;
 	
 	// Print to terminal	
 	from_receive_to_send(&queue_sender, &queue_receiver);
-	uart_my_send();
-	uart_my_send2(NEWLINE);
+	uart_send(NEWLINE);
 	
 	// Convert to int
 	operand2 = get_data(queue_get_data);
@@ -469,18 +457,13 @@ void queue_push_string(queue_t * Q, const char * string, const uint8_t length)
 	}
 }
 
-void uart_my_send()
-{
-	USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
-}
-
-void uart_my_send2(char *q)
+void uart_send(char *q)
 {
 	queue_push_string(&queue_sender, q, strlen(q));
 	USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
 }
 
-void uart_my_receive()
+void uart_receive()
 {
 	b_receive_done = 0;
 	USART_ITConfig(USART3, USART_IT_RXNE, ENABLE);
@@ -496,6 +479,7 @@ void from_receive_to_send(queue_t * send, queue_t * receive)
 		item = queue_pop(receive, &b_success);
 		queue_push(send, item);
 	}
+	USART_ITConfig(USART3, USART_IT_TXE, ENABLE);
 }
 
 int get_data(queue_t q)

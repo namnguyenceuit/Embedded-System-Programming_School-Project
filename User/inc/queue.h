@@ -40,8 +40,8 @@ void queue_init(queue_t * Q);                                             /*!< I
 uint8_t queue_is_empty(const queue_t * Q);                                /*!< Check if queue is empty */
 uint8_t queue_is_full(const queue_t * Q);                                 /*!< Check if queue is full */
 uint8_t queue_push(queue_t * Q, const uint8_t data);                      /*!< Push data to queue */
-uint8_t queue_pop(queue_t * Q, uint8_t * b_success);                      /*!< Popup data from queue */
-uint8_t queue_peek(const queue_t * Q, uint8_t * b_success);               /*!< Peek the front item of queue */
+uint8_t queue_pop(queue_t * Q, uint8_t * success);                      /*!< Popup data from queue */
+uint8_t queue_peek(const queue_t * Q, uint8_t * success);               /*!< Peek the front item of queue */
 
 
 #ifdef __cplusplus

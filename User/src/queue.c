@@ -35,16 +35,16 @@ void queue_init(queue_t * Q)
   */
 uint8_t queue_is_empty(const queue_t * Q)
 {
-	uint8_t b_result;
+	uint8_t result;
 	if(0 == Q->capacity)
 	{
-		b_result = 1;
+		result = 1;
 	}
 	else
 	{
-		b_result = 0;
+		result = 0;
 	}
-	return b_result;
+	return result;
 }
 
 
@@ -53,16 +53,16 @@ uint8_t queue_is_empty(const queue_t * Q)
   */
 uint8_t queue_is_full(const queue_t * Q)
 {
-	uint8_t b_result;
+	uint8_t result;
 	if(QUEUE_MAX_COUNT == Q->capacity)
 	{
-		b_result = 1;
+		result = 1;
 	}
 	else
 	{
-		b_result = 0;
+		result = 0;
 	}
-	return b_result;
+	return result;
 }
 
 /**
@@ -70,30 +70,30 @@ uint8_t queue_is_full(const queue_t * Q)
   */
 uint8_t queue_push(queue_t * Q, const uint8_t data)
 {
-	uint8_t b_success;
+	uint8_t success;
 	if(1 == queue_is_full(Q))
 	{
-		b_success = 0;
+		success = 0;
 	}
 	else
 	{
 		Q->items[Q->capacity] = data;
 		Q->capacity++;
-		b_success = 1;
+		success = 1;
 	}
-	return b_success;
+	return success;
 }
 
 /**
   * @brief  Popup data from queue
   */
-uint8_t queue_pop(queue_t * Q, uint8_t * b_success) 
+uint8_t queue_pop(queue_t * Q, uint8_t * success) 
 {
 	int i;
 	uint8_t data;
 	if(1 == queue_is_empty(Q))
 	{
-		*(b_success) = 0;
+		*(success) = 0;
 	}
 	else
 	{
@@ -104,7 +104,7 @@ uint8_t queue_pop(queue_t * Q, uint8_t * b_success)
 		{
 			Q->items[i] = Q->items[i + 1];
 		}
-		*(b_success) = 1;
+		*(success) = 1;
 	}
 	return data;
 }
@@ -112,17 +112,17 @@ uint8_t queue_pop(queue_t * Q, uint8_t * b_success)
 /**
   * @brief  Peek the front item of queue
   */
-uint8_t queue_peek(const queue_t * Q, uint8_t * b_success)
+uint8_t queue_peek(const queue_t * Q, uint8_t * success)
 {
 	uint8_t data;
 	if(1 == queue_is_empty(Q))
 	{
-		*(b_success) = 0;
+		*(success) = 0;
 	}
 	else
 	{
 		data = Q->items[0];
-		*(b_success) = 1;
+		*(success) = 1;
 	}
 	return data;
 }
