@@ -84,8 +84,7 @@ int main(){
 		menu_home();
 		from_receive_to_send(&queue_sender, &queue_receiver);
 		uart_my_send();
-		queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
-		uart_my_send();
+		uart_my_send2(NEWLINE);
 		
 		// Check input option
 		// TODO: add other functions
@@ -146,8 +145,7 @@ void basic_operation()
 	// Print to terminal
 	from_receive_to_send(&queue_sender, &queue_receiver);			
 	uart_my_send();					
-	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
-	uart_my_send();
+	uart_my_send2(NEWLINE);
 	
 	op_operator = queue_get_data.items[0];
 	
@@ -185,8 +183,7 @@ void simple_led()
 	
 	from_receive_to_send(&queue_sender, &queue_receiver);
 	uart_my_send();					
-	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
-	uart_my_send();
+	uart_my_send2(NEWLINE);
 	
 	op_operator = queue_get_data.items[0];
 	STM_EVAL_LEDInit(LED3);
@@ -213,15 +210,14 @@ void simple_led()
 void blink()
 {
 	int i, j, times;
-	char* input_times = "Blink LED! Input times you want to blink: ";
+	char* INPUT_TIMES = "Blink LED! Input times you want to blink: ";
 	
 	// queue for get data input
 	queue_t queue_get_data;
 	
 	/* Process for times input	*/
 	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
-	queue_push_string(&queue_sender, input_times, strlen(input_times));
-	uart_my_send();
+	uart_my_send2(INPUT_TIMES);
 	uart_my_receive();
 	
 	// Get data input
@@ -230,8 +226,7 @@ void blink()
 	// Print to terminal
 	from_receive_to_send(&queue_sender, &queue_receiver);			
 	uart_my_send();					
-	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
-	uart_my_send();
+	uart_my_send2(NEWLINE);
 	
 	// Convert to int
 	times = get_data(queue_get_data);
@@ -239,14 +234,13 @@ void blink()
 	{
 			STM_EVAL_LEDOn(LED3);
 			STM_EVAL_LEDOn(LED4);
-			for(j = 0; j < 1000000; j++);
+			for(j = 0; j < 3000000; j++);
 			STM_EVAL_LEDOff(LED3);
 			STM_EVAL_LEDOff(LED4);
-			for(j = 0; j < 1000000; j++);
+			for(j = 0; j < 3000000; j++);
 	}
 	
-	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
-	uart_my_send();
+	uart_my_send2(NEWLINE);
 }
 void plus()
 {
@@ -371,31 +365,29 @@ void module(void)
 
 void op2_print_result(char *result)
 {
-	char* txtresult = "Result: ";	
+	char* txtResult = "Result: ";	
+	char* ESC = "ESC: return previous menu\n";
 	
-	queue_push_string(&queue_sender, txtresult, strlen(txtresult));
-	queue_push_string(&queue_sender, result, strlen(result));
-	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
-	
-	
-	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
-	uart_my_send();
+	uart_my_send2(txtResult);
+	uart_my_send2(result);
+	uart_my_send2(NEWLINE);
+	uart_my_send2(ESC);;
+	uart_my_send2(NEWLINE);
 	uart_my_receive();
 }
 
 void input_operand(int *a, int *b)
 {	
 	int operand1, operand2;
-	char* num1 = "Operand 1: ";
-	char* num2 = "Operand 2: ";
+	char* NUM1_REQUEST = "Operand 1: ";
+	char* NUM2_REQUEST = "Operand 2: ";
 	
 	// queue for get data input
 	queue_t queue_get_data;
 	
 	/* Process for operand 1	*/
-	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
-	queue_push_string(&queue_sender, num1, strlen(num1));
-	uart_my_send();
+	uart_my_send2(NEWLINE);
+	uart_my_send2(NUM1_REQUEST);
 	uart_my_receive();
 	
 	// Get data input
@@ -404,8 +396,7 @@ void input_operand(int *a, int *b)
 	// Print to terminal
 	from_receive_to_send(&queue_sender, &queue_receiver);			
 	uart_my_send();					
-	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
-	uart_my_send();
+	uart_my_send2(NEWLINE);
 	
 	// Convert to int
 	operand1 = get_data(queue_get_data);
@@ -413,8 +404,7 @@ void input_operand(int *a, int *b)
 	
 	
 	// Process for operand 2
-	queue_push_string(&queue_sender, num2, strlen(num2));
-	uart_my_send();
+	uart_my_send2(NUM2_REQUEST);
 	uart_my_receive();
 	
 	// Get data input	
@@ -423,8 +413,7 @@ void input_operand(int *a, int *b)
 	// Print to terminal	
 	from_receive_to_send(&queue_sender, &queue_receiver);
 	uart_my_send();
-	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
-	uart_my_send();
+	uart_my_send2(NEWLINE);
 	
 	// Convert to int
 	operand2 = get_data(queue_get_data);
