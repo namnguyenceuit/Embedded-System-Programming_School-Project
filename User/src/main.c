@@ -10,30 +10,26 @@
 #define RXNE_BIT		0x0020
 #define RXNE_SHIFT_LEFT	5
 
-void uart_interrupt_my_init(void);
+void uart_interrupt_init(void);
 void uart_send(char *q);
 void uart_receive(void);
 void from_receive_to_send(queue_t * send, queue_t * receive);
 void queue_push_string(queue_t * Q, const char * string, const uint8_t length);
 int get_data(queue_t q);
-void input_operand(int *a, int *b);
-void op2_print_result(char *result);
+void option2_input_operand(int *a, int *b);
+void option2_print_result(char *result);
 void plus(void);
 void subtract(void);
 void multiply(void);
 void divide(void);
 void module(void);
 void blink(void);
-void menu_home(void);
-void menu_option2(void);
-void menu_option3(void);
+
 void student_info(void);
 void basic_operation(void);
 void simple_led(void);
 
 extern volatile uint8_t b_receive_done;
-// extern variable declare for using option
-extern volatile uint8_t msgSend;
 
 extern queue_t queue_sender;
 extern queue_t queue_receiver;
@@ -70,57 +66,50 @@ char* OPTION3 = "3. Simple led\n\
 
 char* NEWLINE = "\n";
 
+int choose;
+queue_t queue_get_data;
+
+char* c_result;
+char a_result[100];	
+int i_result;
 
 int main(){
-	
 	queue_init(&queue_sender);
 	queue_init(&queue_receiver);
+	queue_init(&queue_get_data);
 	
 	// Uart interrupt init
-	uart_interrupt_my_init();
+	uart_interrupt_init();
 
 	for(;;){
 		// Send option & wait for user input
-		menu_home();
+		uart_send(MAIN_MENU);
+		uart_receive();
+		queue_get_data = queue_receiver;
 		from_receive_to_send(&queue_sender, &queue_receiver);
 		uart_send(NEWLINE);
 		
 		// Check input option
 		// TODO: check if user input orther keys
-		switch (msgSend)
+		choose = get_data(queue_get_data);
+		
+		switch (choose)
 		{
-			case '1':
+			case 1:
 				student_info();
 				break;
-			case '2':
+			case 2:
 				basic_operation();
 				break;
-			case '3':
+			case 3:
 				simple_led();
 				break;
 			default:
-				menu_home();
+				USART_ITConfig(USART3, USART_IT_RXNE, DISABLE);
+				b_receive_done = 1;
 		}
 	}
 	return 0;
-}
-
-void menu_home()
-{
-	uart_send(MAIN_MENU);
-	uart_receive();
-}
-
-void menu_option2()
-{
-	uart_send(NEWLINE);
-	uart_send(OPTION2);
-}
-
-void menu_option3()
-{
-	uart_send(NEWLINE);
-	uart_send(OPTION3);
 }
 
 void student_info()
@@ -132,11 +121,9 @@ void student_info()
 
 void basic_operation()
 {
-	queue_t queue_get_data;
-	int op_operator;
-	
 	// Home screen option 2
-	menu_option2();
+	uart_send(NEWLINE);
+	uart_send(OPTION2);
 	uart_receive();	
 	queue_get_data = queue_receiver;
 	
@@ -144,10 +131,10 @@ void basic_operation()
 	from_receive_to_send(&queue_sender, &queue_receiver);					
 	uart_send(NEWLINE);
 	
-	op_operator = queue_get_data.items[0];
+	choose = queue_get_data.items[0];
 	
 	//TODO: ESC doesn't show the previous menu
-	switch (op_operator)
+	switch (choose)
 	{
 		case 'a':
 			plus();
@@ -165,28 +152,26 @@ void basic_operation()
 			module();
 			break;
 		default:
-			menu_option2();
+			uart_send(NEWLINE);
+			uart_send(OPTION2);
 	}	
 }
 
 void simple_led()
 {
-	queue_t queue_get_data;
-	int op_operator;
-	
-	menu_option3();
+	uart_send(NEWLINE);
+	uart_send(OPTION3);
 	uart_receive();	
 	queue_get_data = queue_receiver;
 	
 	from_receive_to_send(&queue_sender, &queue_receiver);				
 	uart_send(NEWLINE);
 	
-	op_operator = queue_get_data.items[0];
+	choose = queue_get_data.items[0];
 	STM_EVAL_LEDInit(LED3);
 	STM_EVAL_LEDInit(LED4);
 	
-	
-	switch (op_operator)
+	switch (choose)
 	{
 		case 'a':
 			STM_EVAL_LEDOn(LED3);
@@ -198,7 +183,8 @@ void simple_led()
 			blink();
 			break;
 		default:
-			menu_option3();
+			uart_send(NEWLINE);
+			uart_send(OPTION3);
 	}
 	
 }
@@ -207,10 +193,7 @@ void blink()
 {
 	int i, j, times;
 	char* INPUT_TIMES = "Blink LED! Input times you want to blink: ";
-	
-	// queue for get data input
-	queue_t queue_get_data;
-	
+		
 	/* Process for times input	*/
 	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
 	uart_send(INPUT_TIMES);
@@ -242,22 +225,18 @@ void plus()
 	// variables for calculation
 	int operand1;
 	int operand2;
-	// variables for showing result
-	char* result;
-	char sum_convert[100];	
-	int sum;
-
-	input_operand(&operand1, &operand2);
+	
+	option2_input_operand(&operand1, &operand2);
 	
 	// Cal sum
-	sum = operand1 + operand2;
+	i_result = operand1 + operand2;
 	
 	// Convert back to string
-	sprintf(sum_convert,"%d",sum);
-	result = sum_convert;
+	sprintf(a_result,"%d",i_result);
+	c_result = a_result;
 	
 	// Print result
-	op2_print_result(result);
+	option2_print_result(c_result);
 }
 
 void subtract()
@@ -265,22 +244,18 @@ void subtract()
 	// variables for calculation
 	int operand1;
 	int operand2;
-	// variables for showing result
-	char* result;
-	char sub_convert[100];	
-	int sub;
 
-	input_operand(&operand1, &operand2);
+	option2_input_operand(&operand1, &operand2);
 	
 	// Cal sum
-	sub = operand1 - operand2;
+	i_result = operand1 - operand2;
 	
 	// Convert back to string
-	sprintf(sub_convert,"%d",sub);
-	result = sub_convert;
+	sprintf(a_result,"%d",i_result);
+	c_result = a_result;
 	
 	// Print result
-	op2_print_result(result);
+	option2_print_result(c_result);
 }
 
 void multiply(void)
@@ -288,22 +263,18 @@ void multiply(void)
 	// variables for calculation
 	int operand1;
 	int operand2;
-	// variables for showing result
-	char* result;
-	char mul_convert[100];	
-	int mul;
 
-	input_operand(&operand1, &operand2);
+	option2_input_operand(&operand1, &operand2);
 	
 	// Cal sum
-	mul = operand1 * operand2;
+	i_result = operand1 * operand2;
 	
 	// Convert back to string
-	sprintf(mul_convert,"%d",mul);
-	result = mul_convert;
+	sprintf(a_result,"%d",i_result);
+	c_result = a_result;
 	
 	// Print result
-	op2_print_result(result);	
+	option2_print_result(c_result);
 }
 
 
@@ -312,22 +283,20 @@ void divide(void)
 	// variables for calculation
 	int operand1;
 	int operand2;
-	// variables for showing result
-	char* result;
-	char div_convert[100];	
+
 	float div;
 
-	input_operand(&operand1, &operand2);
+	option2_input_operand(&operand1, &operand2);
 	
 	// Cal sum
 	div = (float)(operand1) / (float)(operand2);
 	
 	// Convert back to string
-	sprintf(div_convert,"%0.2f",div);
-	result = div_convert;
+	sprintf(a_result,"%0.2f",div);
+	c_result = a_result;
 	
 	// Print result
-	op2_print_result(result);	
+	option2_print_result(c_result);	
 }
 
 void module(void)
@@ -335,25 +304,23 @@ void module(void)
 	// variables for calculation
 	int operand1;
 	int operand2;
-	// variables for showing result
-	char* result;
-	char mol_convert[100];	
+
 	float mol;
 
-	input_operand(&operand1, &operand2);
+	option2_input_operand(&operand1, &operand2);
 	
 	// Cal sum
 	mol = sqrt((float)(operand1 * operand1) + (float)(operand2 * operand2));
 	
 	// Convert back to string
-	sprintf(mol_convert,"%0.2f",mol);
-	result = mol_convert;
+	sprintf(a_result,"%0.2f",mol);
+	c_result = a_result;
 	
 	// Print result
-	op2_print_result(result);	
+	option2_print_result(c_result);	
 }
 
-void op2_print_result(char *result)
+void option2_print_result(char *result)
 {
 	char* txtResult = "Result: ";	
 	char* ESC = "ESC: return previous menu\n";
@@ -366,14 +333,11 @@ void op2_print_result(char *result)
 	uart_receive();
 }
 
-void input_operand(int *a, int *b)
+void option2_input_operand(int *a, int *b)
 {	
 	int operand1, operand2;
 	char* NUM1_REQUEST = "Operand 1: ";
 	char* NUM2_REQUEST = "Operand 2: ";
-	
-	// queue for get data input
-	queue_t queue_get_data;
 	
 	/* Process for operand 1	*/
 	uart_send(NEWLINE);
@@ -408,7 +372,7 @@ void input_operand(int *a, int *b)
 	*b = operand2;
 }
 
-void uart_interrupt_my_init()
+void uart_interrupt_init()
 {
 	GPIO_InitTypeDef gpio_init;
 	USART_InitTypeDef usart_init;
