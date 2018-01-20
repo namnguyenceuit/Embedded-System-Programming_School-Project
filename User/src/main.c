@@ -14,7 +14,7 @@ void uart_interrupt_init(void);
 void uart_send(char *q);
 void uart_receive(void);
 void from_receive_to_send(queue_t * send, queue_t * receive);
-void queue_push_string(queue_t * Q, const char * string, const uint8_t length);
+void queue_push_string(queue_t * q, const char * string, const uint8_t length);
 int get_data(queue_t q);
 void option2_input_operand(int *a, int *b);
 void option2_print_result(char *result);
@@ -121,6 +121,7 @@ void student_info()
 
 void basic_operation()
 {
+	int check;
 	// Home screen option 2
 	uart_send(NEWLINE);
 	uart_send(OPTION2);
@@ -131,30 +132,48 @@ void basic_operation()
 	from_receive_to_send(&queue_sender, &queue_receiver);					
 	uart_send(NEWLINE);
 	
+	// get data to check if wrong input
 	choose = queue_get_data.items[0];
+	check = queue_get_data.items[1];
 	
-	//TODO: ESC doesn't show the previous menu
-	switch (choose)
+	// Check if user input two char like "aa" or "bb" or not a char in option like "f"
+	//							Enter					 a							e
+	while (check != 13 || choose < 97 || choose > 101)
 	{
-		case 'a':
-			plus();
-			break;
-		case 'b':
-			subtract();
-			break;
-		case 'c':
-			multiply();
-			break;
-		case 'd':
-			divide();
-			break;
-		case 'e':
-			module();
-			break;
-		default:
-			uart_send(NEWLINE);
-			uart_send(OPTION2);
-	}	
+		uart_send("Not a option!\n");
+		uart_send(NEWLINE);
+		uart_send(OPTION2);
+		uart_receive();
+		
+		queue_get_data = queue_receiver;
+		// Print to terminal
+		from_receive_to_send(&queue_sender, &queue_receiver);					
+		uart_send(NEWLINE);
+	
+		choose = queue_get_data.items[0];
+		check = queue_get_data.items[1];
+	}
+		
+		//TODO: ESC doesn't show the previous menu
+		switch (choose)
+		{
+			case 'a':
+				plus();
+				break;
+			case 'b':
+				subtract();
+				break;
+			case 'c':
+				multiply();
+				break;
+			case 'd':
+				divide();
+				break;
+			case 'e':
+				module();
+				break;
+		}			
+	
 }
 
 void simple_led()
@@ -412,12 +431,12 @@ void uart_interrupt_init()
 	USART_Cmd(USART3, ENABLE);
 }
 
-void queue_push_string(queue_t * Q, const char * string, const uint8_t length)
+void queue_push_string(queue_t * q, const char * string, const uint8_t length)
 {
 	int i;
 	for(i = 0; i < length; i++)
 	{
-		queue_push(Q, string[i]);
+		queue_push(q, string[i]);
 	}
 }
 
