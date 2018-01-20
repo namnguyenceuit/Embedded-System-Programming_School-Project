@@ -152,9 +152,12 @@ void basic_operation()
 	
 		choose = queue_get_data.items[0];
 		check = queue_get_data.items[1];
+		if (choose == 27)
+			continue;
 	}
 		
 		//TODO: ESC doesn't show the previous menu
+	//TODO: check if input_operand not a number
 		switch (choose)
 		{
 			case 'a':
@@ -173,11 +176,12 @@ void basic_operation()
 				module();
 				break;
 		}			
-	
 }
 
 void simple_led()
 {
+	int check;
+	
 	uart_send(NEWLINE);
 	uart_send(OPTION3);
 	uart_receive();	
@@ -186,9 +190,30 @@ void simple_led()
 	from_receive_to_send(&queue_sender, &queue_receiver);				
 	uart_send(NEWLINE);
 	
-	choose = queue_get_data.items[0];
 	STM_EVAL_LEDInit(LED3);
 	STM_EVAL_LEDInit(LED4);
+	
+	// get data to check if wrong input
+	choose = queue_get_data.items[0];
+	check = queue_get_data.items[1];
+	
+	// Check if user input two char like "aa" or "bb" or not a char in option like "f"
+	//							Enter					 a							c
+	while (check != 13 || choose < 97 || choose > 99)
+	{
+		uart_send("Not a option!\n");
+		uart_send(NEWLINE);
+		uart_send(OPTION3);
+		uart_receive();
+		
+		queue_get_data = queue_receiver;
+		// Print to terminal
+		from_receive_to_send(&queue_sender, &queue_receiver);					
+		uart_send(NEWLINE);
+	
+		choose = queue_get_data.items[0];
+		check = queue_get_data.items[1];
+	}
 	
 	switch (choose)
 	{
@@ -201,11 +226,7 @@ void simple_led()
 		case 'c':
 			blink();
 			break;
-		default:
-			uart_send(NEWLINE);
-			uart_send(OPTION3);
 	}
-	
 }
 
 void blink()
@@ -226,6 +247,7 @@ void blink()
 	uart_send(NEWLINE);
 	
 	// Convert to int
+	// TODO: add timer
 	times = get_data(queue_get_data);
 	for (i = 0; i < times; i++)
 	{
