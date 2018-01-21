@@ -152,8 +152,6 @@ void basic_operation()
 	
 		choose = queue_get_data.items[0];
 		check = queue_get_data.items[1];
-		if (choose == 27)
-			continue;
 	}
 		
 		//TODO: ESC doesn't show the previous menu
@@ -376,9 +374,10 @@ void option2_print_result(char *result)
 
 void option2_input_operand(int *a, int *b)
 {	
-	int operand1, operand2;
+	int operand1, operand2, check1, check2;
 	char* NUM1_REQUEST = "Operand 1: ";
 	char* NUM2_REQUEST = "Operand 2: ";
+	check1 = 0;
 	
 	/* Process for operand 1	*/
 	uart_send(NEWLINE);
@@ -387,26 +386,61 @@ void option2_input_operand(int *a, int *b)
 	
 	// Get data input
 	queue_get_data = queue_receiver;
-	
+	check1 = queue_get_data.items[0];
+		
 	// Print to terminal
 	from_receive_to_send(&queue_sender, &queue_receiver);						
 	uart_send(NEWLINE);
 	
+	while (check1 < 48 || check1 > 57)
+	{
+		/* Process for operand 1	*/
+		uart_send(NEWLINE);
+		uart_send("Not a number! Pls input again!\n");
+		uart_send(NUM1_REQUEST);
+		uart_receive();
+	
+		// Get data input
+		queue_get_data = queue_receiver;
+		check1 = queue_get_data.items[0];
+		
+		// Print to terminal
+		from_receive_to_send(&queue_sender, &queue_receiver);						
+		uart_send(NEWLINE);
+	}
+		
 	// Convert to int
 	operand1 = get_data(queue_get_data);
 	*a = operand1;
 	
-	
+	check2 = 0;
 	// Process for operand 2
 	uart_send(NUM2_REQUEST);
 	uart_receive();
 	
 	// Get data input	
 	queue_get_data = queue_receiver;
+	check2 = queue_get_data.items[0];
 	
 	// Print to terminal	
 	from_receive_to_send(&queue_sender, &queue_receiver);
-	uart_send(NEWLINE);
+	uart_send(NEWLINE);	
+	
+	while (check2 < 48 || check2 > 57)
+	{
+		uart_send("Not a number! Pls input again!\n");
+		// Process for operand 2
+		uart_send(NUM2_REQUEST);
+		uart_receive();
+	
+		// Get data input	
+		queue_get_data = queue_receiver;
+		check2 = queue_get_data.items[0];
+	
+		// Print to terminal	
+		from_receive_to_send(&queue_sender, &queue_receiver);
+		uart_send(NEWLINE);		
+	}
 	
 	// Convert to int
 	operand2 = get_data(queue_get_data);
