@@ -610,6 +610,36 @@
               <FileType>1</FileType>
               <FilePath>.\User\src\stm32f4xx_it.c</FilePath>
             </File>
+            <File>
+              <FileName>student_info.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\src\student_info.c</FilePath>
+            </File>
+            <File>
+              <FileName>uart_isr_configuration.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\src\uart_isr_configuration.c</FilePath>
+            </File>
+            <File>
+              <FileName>basic_operation.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\src\basic_operation.c</FilePath>
+            </File>
+            <File>
+              <FileName>simple_led.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\src\simple_led.c</FilePath>
+            </File>
+            <File>
+              <FileName>advance_led.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\src\advance_led.c</FilePath>
+            </File>
+            <File>
+              <FileName>timer_counter.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\User\src\timer_counter.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -1,6 +1,6 @@
 #include "stm32f4xx_it.h"
 #include "main.h"
-#include "queue.h"
+
 
 volatile uint8_t b_receive_done;
 volatile int flag_multi_input;
@@ -15,7 +15,7 @@ uint8_t msgSend;
 uint8_t msgReceive;
 uint8_t b_success;
 
-extern uint8_t SPI_data_get;
+volatile uint8_t SPI_data_get;
 
 void NMI_Handler(void)
 {
