@@ -21,8 +21,8 @@ void uart_receive(void);
 void from_receive_to_send(queue_t * send, queue_t * receive);
 void queue_push_string(queue_t * q, const char * string, const uint8_t length);
 int get_data(queue_t q);
-void option2_input_operand(int *a, int *b);
-void get_input_operand(int *operand);
+void option2_input(int *a, int *b);
+void get_input_number(int *operand);
 void option2_print_result(char *result);
 void plus(void);
 void subtract(void);
@@ -343,24 +343,14 @@ void blink()
 {
 	int i, j, times;
 	char* INPUT_TIMES = "Blink LED! Input times you want to blink: ";
+	char* BLINKING = "Blinking.... Pls wait & look at the board...\n";
 		
 	/* Process for times input	*/
 	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
 	uart_send(INPUT_TIMES);
-	uart_receive();
+	get_input_number(&times);
+	uart_send(BLINKING);
 	
-	// Get data input
-	queue_get_data = queue_receiver;
-	
-	
-	choose = queue_get_data.items[0];
-	// Print to terminal
-	from_receive_to_send(&queue_sender, &queue_receiver);								
-	uart_send(NEWLINE);
-	
-	// Convert to int
-	// TODO: add timer
-	times = get_data(queue_get_data);
 	for (i = 0; i < times; i++)
 	{
 			STM_EVAL_LEDOn(LED3);
@@ -370,8 +360,6 @@ void blink()
 			STM_EVAL_LEDOff(LED4);
 			for(j = 0; j < 3000000; j++);
 	}
-	
-	uart_send(NEWLINE);
 }
 void plus()
 {
@@ -379,7 +367,7 @@ void plus()
 	int operand1;
 	int operand2;
 	
-	option2_input_operand(&operand1, &operand2);
+	option2_input(&operand1, &operand2);
 	
 	// Cal sum
 	i_result = operand1 + operand2;
@@ -398,7 +386,7 @@ void subtract()
 	int operand1;
 	int operand2;
 
-	option2_input_operand(&operand1, &operand2);
+	option2_input(&operand1, &operand2);
 	
 	// Cal sum
 	i_result = operand1 - operand2;
@@ -417,7 +405,7 @@ void multiply(void)
 	int operand1;
 	int operand2;
 
-	option2_input_operand(&operand1, &operand2);
+	option2_input(&operand1, &operand2);
 	
 	// Cal sum
 	i_result = operand1 * operand2;
@@ -439,7 +427,7 @@ void divide(void)
 
 	float div;
 
-	option2_input_operand(&operand1, &operand2);
+	option2_input(&operand1, &operand2);
 	
 	// Cal sum
 	div = (float)(operand1) / (float)(operand2);
@@ -460,7 +448,7 @@ void module(void)
 
 	float mol;
 
-	option2_input_operand(&operand1, &operand2);
+	option2_input(&operand1, &operand2);
 	
 	// Cal sum
 	mol = sqrt((float)(operand1 * operand1) + (float)(operand2 * operand2));
@@ -479,27 +467,21 @@ void option2_print_result(char *result)
 	char* ESC = "ESC: return previous menu\n";
 	
 	uart_send(txtResult);
-	uart_send(result);
-	uart_send(NEWLINE);
-	uart_send(ESC);;
-	uart_send(NEWLINE);
-	uart_receive();
-	
-	queue_receiver.capacity = 0;
-	choose = queue_receiver.items[0];
-	
-	while (choose != 27)
+	uart_send(result);	
+	do
 	{
-		uart_send(ESC);
-		queue_receiver.capacity = 0;
+		uart_send(NEWLINE);
+		uart_send(ESC);;
 		uart_receive();
-	
+		queue_receiver.capacity = 0;
+				
 		choose = queue_receiver.items[0];
-	}
+	}while (choose != 27);
+	
 	basic_operation();
 }
 
-void option2_input_operand(int * a, int *b)
+void option2_input(int * a, int *b)
 {	
 	char* NUM1_REQUEST = "Operand 1: ";
 	char* NUM2_REQUEST = "Operand 2: ";
@@ -509,14 +491,14 @@ void option2_input_operand(int * a, int *b)
 	uart_send(NEWLINE);
 	uart_send(NUM1_REQUEST);
 	
-	get_input_operand(a);
+	get_input_number(a);
 	
 	// Process for operand 2
 	uart_send(NUM2_REQUEST);
-	get_input_operand(b);
+	get_input_number(b);
 }
 
-void get_input_operand(int *operand)
+void get_input_number(int *operand)
 {
 	int i = 0;
 	char data[100];
