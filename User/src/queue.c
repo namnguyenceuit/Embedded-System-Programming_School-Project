@@ -1,21 +1,11 @@
 /** @file queue.c
 *
-* @brief Queue module
-*
-* @par
-* All rights reserved.
+* @brief queue module
 */
-
 
 /* Includes ------------------------------------------------------------------*/
 #include <stdint.h>
 #include "queue.h"
-/* Private typedef -----------------------------------------------------------*/
-/* Private constant ----------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
-/* Private function prototypes -----------------------------------------------*/
-/* Public functions ----------------------------------------------------------*/
 
 /**
   * @brief  Initializes the queue
@@ -46,7 +36,6 @@ uint8_t queue_is_empty(const queue_t * Q)
 	}
 	return result;
 }
-
 
 /**
   * @brief  Check if queue is full or not

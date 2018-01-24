@@ -11,25 +11,31 @@
 #define RXNE_SHIFT_LEFT	5
 #define SS_DISABLE GPIO_ResetBits(GPIOA, GPIO_Pin_4)
 #define SS_ENABLE  GPIO_SetBits(GPIOA, GPIO_Pin_4)
+#define EMPTY_QUEUE_RECEIVER queue_receiver.capacity = 0;
 
 void uart_interrupt_init(void);
+void timer3_interrupt_init(void);
+void timer4_interrupt_init(void);
 void SPI_Configuration(void);
-void Delay(__IO uint32_t nCount);
 
 void uart_send(char *q);
 void uart_receive(void);
 void from_receive_to_send(queue_t * send, queue_t * receive);
 void queue_push_string(queue_t * q, const char * string, const uint8_t length);
 int get_data(queue_t q);
+void countdown(void);
+void stopwatch(void);
 void option2_input(int *a, int *b);
 void get_input_number(int *operand);
 void option2_print_result(char *result);
+
 void plus(void);
 void subtract(void);
 void multiply(void);
 void divide(void);
 void module(void);
 void blink(void);
+void timer_counter(void);
 
 void student_info(void);
 void basic_operation(void);
@@ -37,22 +43,27 @@ void simple_led(void);
 void advance_led(void);
 
 volatile uint8_t SPI_data_get;
-volatile uint8_t SPI_data_get2;
+
 extern volatile uint8_t b_receive_done;
+extern volatile int time_count_down;
+extern volatile int time_count_up;
+extern volatile int flag_multi_input;
+extern volatile int flag_time_update;
 
 extern queue_t queue_sender;
 extern queue_t queue_receiver;
 
-char* MAIN_MENU = "Choose your option (1, 2, ..): \n\
-								1. Student info\n\
-								2. Basic operation\n\
-								3. Simple led\n\
-								4. Advance led\n\
-								5. Audio\n\
-								ESC: return previous menu\n\
-								Your option: ";
+char* MAIN_MENU = "\n----------MAIN MENU----------\n\
+										Choose your option (1, 2, ..): \n\
+										1. Student info\n\
+										2. Basic operation\n\
+										3. Simple led\n\
+										4. Advance led\n\
+										5. Timer\n\
+										ESC: return previous menu\n\
+										Your option: ";
 
-char* OPTION1 = "\n1. Student info\n\
+char* OPTION1 = "\n1. Student info:\n\
 								ID: 14520555\n\
 								Full name: Nguyen Thanh Nam\n\
 								ESC: return previous menu\n";
@@ -66,14 +77,28 @@ char* OPTION2 = "2. Basic operation( a,b,..):\n\
 								ESC: return previous menu\n\
 								Your option: ";
 
-char* OPTION3 = "3. Simple led\n\
+char* OPTION3 = "3. Simple led:\n\
 								a. On Green\n\
 								b. Off Green\n\
 								c. Blink led\n\
 								ESC: return previous menu\n\
 								Your option: ";
 
+char* OPTION4 = "4. Advance led(a,b,c):\n\
+								a. Set set led\n\
+								b. Set direction\n\
+								c. Start\n\
+								ESC: return previous menu\n\
+								Your option: ";
+
+char* OPTION5 = "5. Timer(a,b):\n\
+								a. Countdown\n\
+								b. Stopwatch\n\
+								ESC: return previous menu\n\
+								Your option: ";
+
 char* NEWLINE = "\n";
+char* ESC = "ESC: return previous menu\n";
 
 int choose;
 queue_t queue_get_data;
@@ -90,6 +115,8 @@ int main(){
 	
 	// Uart interrupt init
 	uart_interrupt_init();
+	timer3_interrupt_init();
+	timer4_interrupt_init();
 
 	for(;;){
 		queue_receiver.capacity = 0;
@@ -119,6 +146,9 @@ int main(){
 				break;
 			case 4:
 				advance_led();
+				break;
+			case 5:
+				timer_counter();
 				break;
 		}
 	}
@@ -244,19 +274,148 @@ void simple_led()
 
 void advance_led()
 {
+	uart_send(OPTION4);
+	uart_receive();
 	SPI_Configuration();
 	SS_DISABLE;
 
 	SPI_I2S_SendData(SPI1, 99);
 	while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_TXE)==RESET);
 	SS_ENABLE;
-  //Delay(1000);
+}
+
+void timer_counter()
+{
+	queue_receiver.capacity = 0;
+	uart_send(OPTION5);
+	uart_receive();
+	from_receive_to_send(&queue_sender, &queue_receiver);				
+	uart_send(NEWLINE);
 	
-	if (SPI_data_get2 == 99)
+	choose = queue_receiver.items[0];
+	
+	switch (choose)
 	{
-		uart_send("AAAAAAAAA");
+		case 'a':
+			countdown();
+			break;
+		case 'b':
+			stopwatch();
+			break;
+		default:
+			break;
 	}
 }
+
+void countdown()
+{
+	int check;
+	int data;
+	uart_send("\na. Countdown (Input number & press Enter)");
+	uart_send("\nInput time countdown (s): ");
+	
+	get_input_number(&data);
+	time_count_down = data;	
+	
+
+	// enable Timer3 and interrupt for timer4
+	TIM_ITConfig(TIM3,TIM_IT_Update,ENABLE);
+	TIM_Cmd(TIM3, ENABLE);
+	
+	while(time_count_down != 0)
+	{
+		if(flag_time_update == 1)
+		{
+			sprintf(a_result,"%d",time_count_down);
+			uart_send(NEWLINE);
+			uart_send(a_result);
+			uart_send("... ");
+			flag_time_update = 0;
+		}
+	}
+	TIM_ITConfig(TIM3,TIM_IT_Update,DISABLE);
+	TIM_Cmd(TIM3, DISABLE);
+	
+	uart_send("\nTime out !");
+
+	do
+	{
+		uart_send(NEWLINE);
+		uart_send(ESC);;
+		uart_receive();
+		queue_receiver.capacity = 0;
+				
+		choose = queue_receiver.items[0];
+	}while (choose != 27);
+	timer_counter();
+}
+
+void stopwatch()
+{
+	STM_EVAL_LEDInit(LED3);
+	time_count_up = 0;
+	queue_receiver.capacity = 0;
+	uart_send("\nb. Stopwatch");
+	uart_send("\nPress SPACE to Start\n");
+	uart_send("ESC: return previous menu\n");
+	uart_receive();
+	
+	choose = queue_receiver.items[0];
+	if(choose == 27)
+	{
+		timer_counter();
+	}
+	
+	while(choose != 32)
+	{
+		uart_send("Please press SPACE to Start\n");
+		uart_send("ESC: return previous menu\n");
+		uart_receive();
+			
+		choose = queue_receiver.items[0];	
+		uart_send(NEWLINE);
+	}
+	
+	TIM_ITConfig(TIM4,TIM_IT_Update,ENABLE);
+	TIM_Cmd(TIM4, ENABLE);
+	queue_receiver.capacity = 0;
+	uart_send("\nCounting...\nPress SPACE to Stop\n");
+	uart_send(NEWLINE);
+	uart_receive();
+	
+	choose = queue_receiver.items[0];
+	while(choose != 32)
+	{
+		queue_receiver.capacity = 0;
+		uart_send("Counting...\n");
+		uart_send("Please press SPACE to Stop\n");
+		uart_receive();
+		
+		choose = queue_receiver.items[0];
+		uart_send(NEWLINE);
+	}		
+	
+	TIM_ITConfig(TIM4,TIM_IT_Update,DISABLE);
+	TIM_Cmd(TIM4, DISABLE);
+	STM_EVAL_LEDOff(LED3);
+
+	uart_send("Time counted: ");
+	sprintf(a_result,"%d", time_count_up);
+	uart_send(a_result);
+	uart_send("s");
+	
+	do
+	{
+		uart_send(NEWLINE);
+		uart_send(ESC);;
+		uart_receive();
+		queue_receiver.capacity = 0;
+				
+		choose = queue_receiver.items[0];
+	}while (choose != 27);
+	timer_counter();
+	time_count_up = 0;
+} 
 
 void SPI_Configuration()
 {
@@ -466,7 +625,7 @@ void option2_print_result(char *result)
 {
 	
 	char* txtResult = "Result: ";	
-	char* ESC = "ESC: return previous menu\n";
+	
 	
 	uart_send(NEWLINE);
 	uart_send(txtResult);
@@ -568,7 +727,7 @@ void uart_interrupt_init()
 	NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);
 	nvic_init.NVIC_IRQChannel = USART3_IRQn;
 	nvic_init.NVIC_IRQChannelCmd = ENABLE;
-	nvic_init.NVIC_IRQChannelPreemptionPriority = 0;
+	nvic_init.NVIC_IRQChannelPreemptionPriority = 1;
 	NVIC_Init(&nvic_init);
 
 	USART_Cmd(USART3, ENABLE);
@@ -624,9 +783,47 @@ int get_data(queue_t q)
 	return atoi(temp);
 }
 
-void Delay(__IO uint32_t nCount)
+void timer3_interrupt_init()
 {
-  while(nCount--)
-  {
-  }
+	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+	NVIC_InitTypeDef nvic_timer;
+	
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM3, ENABLE);
+  TIM_TimeBaseStructure.TIM_Prescaler = ((SystemCoreClock/4)/1000000)-1;   // frequency = 1MHz
+  TIM_TimeBaseStructure.TIM_Period = 1000 - 1;														// 1ms
+  TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+  TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+	
+  TIM_TimeBaseInit(TIM3, &TIM_TimeBaseStructure);
+	
+	nvic_timer.NVIC_IRQChannel = TIM3_IRQn;
+  nvic_timer.NVIC_IRQChannelPreemptionPriority = 0;
+  nvic_timer.NVIC_IRQChannelSubPriority = 1;
+  nvic_timer.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&nvic_timer);   
+	
+	TIM_ITConfig(TIM3,TIM_IT_Update,DISABLE);
+	TIM_Cmd(TIM3, DISABLE);
+}
+void timer4_interrupt_init()
+{
+	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+	NVIC_InitTypeDef nvic_timer;
+	
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
+  TIM_TimeBaseStructure.TIM_Prescaler = ((SystemCoreClock/4)/1000000)-1;   // frequency = 1MHz
+  TIM_TimeBaseStructure.TIM_Period = 1000 - 1;														// 1ms
+  TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+  TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+	
+  TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
+	
+	nvic_timer.NVIC_IRQChannel = TIM4_IRQn;
+  nvic_timer.NVIC_IRQChannelPreemptionPriority = 0;
+  nvic_timer.NVIC_IRQChannelSubPriority = 1;
+  nvic_timer.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&nvic_timer);   
+	
+	TIM_ITConfig(TIM4,TIM_IT_Update,DISABLE);
+	TIM_Cmd(TIM4, DISABLE);
 }
