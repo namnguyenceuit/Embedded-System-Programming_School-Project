@@ -349,6 +349,7 @@ void blink()
 	queue_push_string(&queue_sender, NEWLINE, strlen(NEWLINE));
 	uart_send(INPUT_TIMES);
 	get_input_number(&times);
+	uart_send(NEWLINE);
 	uart_send(BLINKING);
 	
 	for (i = 0; i < times; i++)
@@ -463,9 +464,11 @@ void module(void)
 
 void option2_print_result(char *result)
 {
+	
 	char* txtResult = "Result: ";	
 	char* ESC = "ESC: return previous menu\n";
 	
+	uart_send(NEWLINE);
 	uart_send(txtResult);
 	uart_send(result);	
 	do
@@ -490,9 +493,10 @@ void option2_input(int * a, int *b)
 	//Process for operand 1	
 	uart_send(NEWLINE);
 	uart_send(NUM1_REQUEST);
-	
 	get_input_number(a);
 	
+	
+	uart_send(NEWLINE);
 	// Process for operand 2
 	uart_send(NUM2_REQUEST);
 	get_input_number(b);
@@ -500,24 +504,33 @@ void option2_input(int * a, int *b)
 
 void get_input_number(int *operand)
 {
-	int i = 0;
+	int i = 0, data_receive;
 	char data[100];
 	for(;;)
 	{
 		queue_receiver.capacity = 0;
 		uart_receive();
 		
-		// Get data input
-		queue_get_data = queue_receiver;
-		data[i] = queue_get_data.items[0];
+		data_receive = queue_receiver.items[0];
 		
-		// Print to terminal
-		from_receive_to_send(&queue_sender, &queue_receiver);
-		if (data[i] == 10 || data[i] == 27)
-			break;
-		i++;
+		if (data_receive < 48 || data_receive > 57)
+		{
+			if (data_receive == 10)
+				break;
+			else
+				continue;
+		}
+		else
+		{
+				data[i] = data_receive;
+			
+				// Print to terminal
+				from_receive_to_send(&queue_sender, &queue_receiver);
+				i++;
+		}
 	}
 	*operand = atoi(data);
+	queue_receiver.capacity = 0;
 	free(data);
 }
 
