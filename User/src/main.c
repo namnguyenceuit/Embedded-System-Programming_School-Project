@@ -9,14 +9,20 @@
 #define TC_SHIFT_LEFT	6
 #define RXNE_BIT		0x0020
 #define RXNE_SHIFT_LEFT	5
+#define SS_DISABLE GPIO_ResetBits(GPIOA, GPIO_Pin_4)
+#define SS_ENABLE  GPIO_SetBits(GPIOA, GPIO_Pin_4)
 
 void uart_interrupt_init(void);
+void SPI_Configuration(void);
+void Delay(__IO uint32_t nCount);
+
 void uart_send(char *q);
 void uart_receive(void);
 void from_receive_to_send(queue_t * send, queue_t * receive);
 void queue_push_string(queue_t * q, const char * string, const uint8_t length);
 int get_data(queue_t q);
 void option2_input_operand(int *a, int *b);
+void get_input_operand(int *operand);
 void option2_print_result(char *result);
 void plus(void);
 void subtract(void);
@@ -28,7 +34,10 @@ void blink(void);
 void student_info(void);
 void basic_operation(void);
 void simple_led(void);
+void advance_led(void);
 
+volatile uint8_t SPI_data_get;
+volatile uint8_t SPI_data_get2;
 extern volatile uint8_t b_receive_done;
 
 extern queue_t queue_sender;
@@ -78,13 +87,17 @@ int main(){
 	queue_init(&queue_receiver);
 	queue_init(&queue_get_data);
 	
+	
 	// Uart interrupt init
 	uart_interrupt_init();
 
 	for(;;){
+		queue_receiver.capacity = 0;
 		// Send option & wait for user input
 		uart_send(MAIN_MENU);
+		//while(queue_is_empty(&queue_receiver));
 		uart_receive();
+		
 		queue_get_data = queue_receiver;
 		from_receive_to_send(&queue_sender, &queue_receiver);
 		uart_send(NEWLINE);
@@ -104,9 +117,9 @@ int main(){
 			case 3:
 				simple_led();
 				break;
-			default:
-				USART_ITConfig(USART3, USART_IT_RXNE, DISABLE);
-				b_receive_done = 1;
+			case 4:
+				advance_led();
+				break;
 		}
 	}
 	return 0;
@@ -116,13 +129,13 @@ void student_info()
 {
 	uart_send(OPTION1);
 	uart_send(NEWLINE);
-	uart_receive();
+	uart_receive();	
 }
 
 void basic_operation()
 {
-	int check;
 	// Home screen option 2
+	queue_receiver.capacity = 0;
 	uart_send(NEWLINE);
 	uart_send(OPTION2);
 	uart_receive();	
@@ -134,12 +147,13 @@ void basic_operation()
 	
 	// get data to check if wrong input
 	choose = queue_get_data.items[0];
-	check = queue_get_data.items[1];
 	
 	// Check if user input two char like "aa" or "bb" or not a char in option like "f"
 	//							Enter					 a							e
-	while (check != 13 || choose < 97 || choose > 101)
+	while (choose < 97 || choose > 101)
 	{
+		if (choose == 27)
+			return;
 		uart_send("Not a option!\n");
 		uart_send(NEWLINE);
 		uart_send(OPTION2);
@@ -151,7 +165,6 @@ void basic_operation()
 		uart_send(NEWLINE);
 	
 		choose = queue_get_data.items[0];
-		check = queue_get_data.items[1];
 	}
 		
 		//TODO: ESC doesn't show the previous menu
@@ -178,8 +191,6 @@ void basic_operation()
 
 void simple_led()
 {
-	int check;
-	
 	uart_send(NEWLINE);
 	uart_send(OPTION3);
 	uart_receive();	
@@ -193,12 +204,14 @@ void simple_led()
 	
 	// get data to check if wrong input
 	choose = queue_get_data.items[0];
-	check = queue_get_data.items[1];
 	
 	// Check if user input two char like "aa" or "bb" or not a char in option like "f"
-	//							Enter					 a							c
-	while (check != 13 || choose < 97 || choose > 99)
+	// TODO: define variables' name
+	//    					 a							c
+	while (choose < 97 || choose > 99)
 	{
+		if (choose == 27)
+			return;
 		uart_send("Not a option!\n");
 		uart_send(NEWLINE);
 		uart_send(OPTION3);
@@ -210,21 +223,120 @@ void simple_led()
 		uart_send(NEWLINE);
 	
 		choose = queue_get_data.items[0];
-		check = queue_get_data.items[1];
 	}
 	
 	switch (choose)
 	{
 		case 'a':
 			STM_EVAL_LEDOn(LED3);
+			simple_led();
 			break;
 		case 'b':
 			STM_EVAL_LEDOff(LED3);
+			simple_led();
 			break;
 		case 'c':
 			blink();
+			simple_led();
 			break;
 	}
+}
+
+void advance_led()
+{
+	SPI_Configuration();
+	SS_DISABLE;
+
+	SPI_I2S_SendData(SPI1, 99);
+	while(SPI_I2S_GetFlagStatus(SPI1,SPI_I2S_FLAG_TXE)==RESET);
+	SS_ENABLE;
+  //Delay(1000);
+	
+	if (SPI_data_get2 == 99)
+	{
+		uart_send("AAAAAAAAA");
+	}
+}
+
+void SPI_Configuration()
+{
+	GPIO_InitTypeDef  GPIO_InitStructure;
+	SPI_InitTypeDef   SPI_InitStructure;
+	NVIC_InitTypeDef  NVIC_InitStructure;
+	
+	/* SPI_MASTER configuration -----------------------------*/
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_SPI1, ENABLE);
+  
+	/*-------- Configuring SlaveSelect-Pin PA4 --------*/
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_4;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;
+  GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;
+  GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_NOPULL;
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+	
+	/*-------- Configuring SCK, MISO, MOSI --------*/
+	//																SCK					MISO				MOSI
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;  
+  GPIO_Init(GPIOA, &GPIO_InitStructure);
+  
+  GPIO_PinAFConfig(GPIOA,GPIO_PinSource5,GPIO_AF_SPI1);
+  GPIO_PinAFConfig(GPIOA,GPIO_PinSource6,GPIO_AF_SPI1);
+  GPIO_PinAFConfig(GPIOA,GPIO_PinSource7,GPIO_AF_SPI1);
+  
+  SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
+  SPI_InitStructure.SPI_Mode = SPI_Mode_Master;
+  SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
+  SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
+  SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;
+  SPI_InitStructure.SPI_NSS = SPI_NSS_Soft;
+  SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_256;
+  SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
+  SPI_InitStructure.SPI_CRCPolynomial = 7;
+  SPI_Init(SPI1, &SPI_InitStructure);
+  
+  /* SPI_SLAVE configuration ------------------------------*/ 
+  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_SPI3, ENABLE);
+	
+	/*-------- Configuring SCK, MISO, MOSI --------*/
+	//																	SS					SCK						MISO				MOSI
+  GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9 | GPIO_Pin_10 | GPIO_Pin_11 | GPIO_Pin_12;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz;  
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  
+  GPIO_PinAFConfig(GPIOC,GPIO_PinSource9,GPIO_AF_SPI3);  
+  GPIO_PinAFConfig(GPIOC,GPIO_PinSource10,GPIO_AF_SPI3);   
+  GPIO_PinAFConfig(GPIOC,GPIO_PinSource11,GPIO_AF_SPI3);  
+  GPIO_PinAFConfig(GPIOC,GPIO_PinSource12,GPIO_AF_SPI3);  
+  
+  SPI_InitStructure.SPI_Direction = SPI_Direction_2Lines_FullDuplex;
+  SPI_InitStructure.SPI_Mode = SPI_Mode_Slave;
+  SPI_InitStructure.SPI_DataSize = SPI_DataSize_8b;
+  SPI_InitStructure.SPI_CPOL = SPI_CPOL_Low;
+  SPI_InitStructure.SPI_CPHA = SPI_CPHA_2Edge;
+  SPI_InitStructure.SPI_NSS = SPI_NSS_Hard;
+  SPI_InitStructure.SPI_BaudRatePrescaler = SPI_BaudRatePrescaler_2;
+  SPI_InitStructure.SPI_FirstBit = SPI_FirstBit_MSB;
+  SPI_InitStructure.SPI_CRCPolynomial = 7;
+  SPI_Init(SPI3, &SPI_InitStructure);
+  
+  NVIC_InitStructure.NVIC_IRQChannel = SPI3_IRQn;
+  NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 0;
+  NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+  NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+  NVIC_Init(&NVIC_InitStructure);
+ 
+  SPI_I2S_ITConfig(SPI3, SPI_I2S_IT_RXNE, ENABLE);
+ 
+  /* Enable SPI_SLAVE */
+  SPI_Cmd(SPI3, ENABLE);
+  /* Enable SPI_MASTER */
+  SPI_Cmd(SPI1, ENABLE); 
 }
 
 void blink()
@@ -240,6 +352,8 @@ void blink()
 	// Get data input
 	queue_get_data = queue_receiver;
 	
+	
+	choose = queue_get_data.items[0];
 	// Print to terminal
 	from_receive_to_send(&queue_sender, &queue_receiver);								
 	uart_send(NEWLINE);
@@ -370,81 +484,59 @@ void option2_print_result(char *result)
 	uart_send(ESC);;
 	uart_send(NEWLINE);
 	uart_receive();
+	
+	queue_receiver.capacity = 0;
+	choose = queue_receiver.items[0];
+	
+	while (choose != 27)
+	{
+		uart_send(ESC);
+		queue_receiver.capacity = 0;
+		uart_receive();
+	
+		choose = queue_receiver.items[0];
+	}
+	basic_operation();
 }
 
-void option2_input_operand(int *a, int *b)
+void option2_input_operand(int * a, int *b)
 {	
-	int operand1, operand2, check1, check2;
 	char* NUM1_REQUEST = "Operand 1: ";
 	char* NUM2_REQUEST = "Operand 2: ";
-	check1 = 0;
 	
-	/* Process for operand 1	*/
+	
+	//Process for operand 1	
 	uart_send(NEWLINE);
 	uart_send(NUM1_REQUEST);
-	uart_receive();
 	
-	// Get data input
-	queue_get_data = queue_receiver;
-	check1 = queue_get_data.items[0];
-		
-	// Print to terminal
-	from_receive_to_send(&queue_sender, &queue_receiver);						
-	uart_send(NEWLINE);
+	get_input_operand(a);
 	
-	while (check1 < 48 || check1 > 57)
-	{
-		/* Process for operand 1	*/
-		uart_send(NEWLINE);
-		uart_send("Not a number! Pls input again!\n");
-		uart_send(NUM1_REQUEST);
-		uart_receive();
-	
-		// Get data input
-		queue_get_data = queue_receiver;
-		check1 = queue_get_data.items[0];
-		
-		// Print to terminal
-		from_receive_to_send(&queue_sender, &queue_receiver);						
-		uart_send(NEWLINE);
-	}
-		
-	// Convert to int
-	operand1 = get_data(queue_get_data);
-	*a = operand1;
-	
-	check2 = 0;
 	// Process for operand 2
 	uart_send(NUM2_REQUEST);
-	uart_receive();
-	
-	// Get data input	
-	queue_get_data = queue_receiver;
-	check2 = queue_get_data.items[0];
-	
-	// Print to terminal	
-	from_receive_to_send(&queue_sender, &queue_receiver);
-	uart_send(NEWLINE);	
-	
-	while (check2 < 48 || check2 > 57)
+	get_input_operand(b);
+}
+
+void get_input_operand(int *operand)
+{
+	int i = 0;
+	char data[100];
+	for(;;)
 	{
-		uart_send("Not a number! Pls input again!\n");
-		// Process for operand 2
-		uart_send(NUM2_REQUEST);
+		queue_receiver.capacity = 0;
 		uart_receive();
-	
-		// Get data input	
+		
+		// Get data input
 		queue_get_data = queue_receiver;
-		check2 = queue_get_data.items[0];
-	
-		// Print to terminal	
+		data[i] = queue_get_data.items[0];
+		
+		// Print to terminal
 		from_receive_to_send(&queue_sender, &queue_receiver);
-		uart_send(NEWLINE);		
+		if (data[i] == 10 || data[i] == 27)
+			break;
+		i++;
 	}
-	
-	// Convert to int
-	operand2 = get_data(queue_get_data);
-	*b = operand2;
+	*operand = atoi(data);
+	free(data);
 }
 
 void uart_interrupt_init()
@@ -523,7 +615,7 @@ void from_receive_to_send(queue_t * send, queue_t * receive)
 
 int get_data(queue_t q)
 {
-	char temp[100];
+	char temp[100] = {NULL};
 	int i = 0;
 	
 	while (queue_is_empty(&q) == 0)
@@ -535,4 +627,11 @@ int get_data(queue_t q)
 	}
 	
 	return atoi(temp);
+}
+
+void Delay(__IO uint32_t nCount)
+{
+  while(nCount--)
+  {
+  }
 }
